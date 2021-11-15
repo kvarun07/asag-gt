@@ -60,6 +60,8 @@ class MultiHeadAttentionLayer(nn.Module):
     
     def forward(self, g, h):
         
+        # print("New Forward!!!")
+        
         Q_h = self.Q(h)
         K_h = self.K(h)
         V_h = self.V(h)

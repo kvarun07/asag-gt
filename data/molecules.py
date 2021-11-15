@@ -257,40 +257,56 @@ def wl_positional_encoding(g):
     return g
 
 def pre_process(old_list):
-    # Old data preprocessing
+    """
+    Graph data preprocessing
+    """
     new_list = []
+    total_nodes = 1         # change as required
+    less_node_count = 0
+    less_edge_count = 0
 
-    for i in old_list:
-        row_list = [] 
-        g_tuple = i[:8]
-        score = i[-1]
-        sim_scores = list(i[8:-1])     #
-
-        for j in g_tuple:
-            # converting graph
-            # grh = dgl.from_networkx(j)
-            grh = j
-            # Force set the dtype of feat tensor
-            
+    for i in range(len(old_list)):
+        row = old_list[i]
+        g_tuple = row[:8] 
+        score = row[-1]
+        sim_scores = list(row[8:-1])     #
+        row_list = []
+        
+        # adding node and edge features
+        for grh in g_tuple:
             embed = grh.ndata['feat']
             embed = embed.to(torch.float32)
+            node_dim = embed.shape[1]
+#             print(">>> Embed shape:", embed.shape, node_dim)
             
-            # a, b = embed.shape[0], embed.shape[1]
-            # embed = torch.reshape(embed, (b, a))
-            # print(embed.shape)
+            deficiency = 0
+            # add extra nodes if less nodes found
+            if (len(grh.nodes()) < total_nodes):
+                less_node_count += 1
+                deficiency = total_nodes - len(grh.nodes())
+                grh.add_nodes(deficiency)
+            
+            # adding node features
+            # append a null (0) vector for every extra padded node
+            extra_embed = torch.zeros(deficiency, node_dim)
+            embed = torch.cat((embed, extra_embed), dim=0)
             grh.ndata['feat'] = embed
+#             print(">>> Padded Embed shape:", embed.shape)
             
-            # grh.ndata['feat'] = torch.tensor(len(grh.nodes()) * [1])
-            
-            
+            # make graph fully connected if zero edges found
+#             if (grh.num_edges() == 0):
+#                 less_edge_count += 1
+#                 grh = make_full_graph(grh)
+                
             grh.edata['feat'] = torch.ones(grh.number_of_edges(), 1)
             row_list.append(grh)
 
-        row_list.append(torch.tensor(sim_scores))   #
-
+        row_list.append(torch.tensor(sim_scores))
         row_list.append(torch.tensor([score]))
         new_list.append(row_list)
 
+    print("\n\n>>>>> LESS NODE COUNT =", less_node_count)
+    print(">>>>> LESS EDGE COUNT =", less_edge_count, "\n\n")
     return new_list
 
 class DataUnit(torch.utils.data.Dataset):
@@ -326,6 +342,7 @@ class MoleculeDataset(torch.utils.data.Dataset):
         # with open('data/all-graph-score.pickle',"rb") as data:
 #         with open('data/scoreall_graphall_withscore.pickle',"rb") as data:
         with open('data/dgl_graphs.pickle',"rb") as data:
+        # with open('data/dgl_score_avg_8dim.pickle',"rb") as data:
             data = pickle.load(data)
 
             print("\nORIGINAL GRAPHS")
@@ -353,18 +370,18 @@ class MoleculeDataset(torch.utils.data.Dataset):
 
             # Define train/test/val splits in the ratio of 8:1:1
             # First shuffle g_list
-            random.seed(0)
+#             random.seed(13)
             random.shuffle(new_data)
             # print(new_data[0])
             total = len(new_data)
-            part1 = math.ceil(0.8*total)
+            part1 = math.ceil(0.9*total)
             part2 = math.ceil(0.9*total)
 
             train = new_data[:part1]
-            val = new_data[part1:part2]
-            test = new_data[part2:]
-            # val = new_data[part1:]
-            # test = new_data[part1:]
+#             val = new_data[part1:part2]
+#             test = new_data[part2:]
+            val = new_data[part1:]
+            test = new_data[part1:]
 
             # Train
             self.train_s_arg0 = DataUnit([ (i[0], i[-2], i[-1]) for i in train ])

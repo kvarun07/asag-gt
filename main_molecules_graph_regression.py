@@ -23,6 +23,7 @@ from tensorboardX import SummaryWriter
 from tqdm import tqdm
 import math
 from layers.mlp_readout_layer import MLPReadout
+from coattention import *
 
 class DotDict(dict):
     def __init__(self, **kwds):
@@ -76,16 +77,19 @@ class MyEnsemble(nn.Module):
     def __init__(self, net_params, model_list, MODEL_NAME):
         super(MyEnsemble, self).__init__()
 
-        #self.model_list = model_list
-        # print("CONSTRUCTOR MODEL LIST", self.model_list)
-
         self.out_dim = net_params['out_dim']
         self.device = net_params['device']    
         self.l = 16 #number of perspectives
         self.dropout = nn.Dropout(0.2)
         
+        self.GT1 = gnn_model(MODEL_NAME, net_params).to(self.device)
+        self.GT2 = gnn_model(MODEL_NAME, net_params).to(self.device)
+        self.GT3 = gnn_model(MODEL_NAME, net_params).to(self.device)
+        self.GT4 = gnn_model(MODEL_NAME, net_params).to(self.device)
         
-        self.GT = gnn_model(MODEL_NAME, net_params).to(self.device)
+        # Adding coattention
+#         self.coattention = CoAttention(self.device, self.out_dim)
+#         self.fc = MLPReadout(2*self.out_dim, 1)
         
         #multi perspective matching weight initialization starts       
         
@@ -96,26 +100,70 @@ class MyEnsemble(nn.Module):
         #multi perspective matching weight initialization ends       
         
         self.MLP_layer_1 = MLPReadout(4*self.l, 1) # #subgraphs * #of perspective 
-        #self.MLP_layer_1 = MLPReadout(4*self.out_dim*4, 1) # #subgraphs * (a,b,a-b and a*b) i.e 4 * (8 * 4) CASE 2 (failed misreably)
 
         # Integrate SBERT scores
-        #self.MLP_layer_2 = MLPReadout(8, 1)
+#         self.MLP_layer_1 = MLPReadout(4*self.l, 4)
+#         self.MLP_layer_2 = MLPReadout(8, 1)
         
         
     def forward(self, g, h, e, h_lap_pos_enc=None, h_wl_pos_enc=None, sim_scores=None):
 
         g_out = []
         #Iterating over graph transformers     
-        for iter in range(8):
-              temp = self.GT(g[iter], h[iter], e[iter], h_lap_pos_enc[iter], h_wl_pos_enc[iter])
-              temp = temp.view(temp.size(0), -1) # Linearize for the FC
-              g_out.append(temp)
-
-#         for iter, item in enumerate(self.model_list):
-#             temp = item.forward(g[iter], h[iter], e[iter], h_lap_pos_enc[iter], h_wl_pos_enc[iter])
-#             temp = temp.view(temp.size(0), -1) # Linearize for the FC
-#             g_out.append(temp)
-
+        # for iter in range(8):
+        #     temp = self.GT(g[iter], h[iter], e[iter], h_lap_pos_enc[iter], h_wl_pos_enc[iter])
+        #     temp = temp.view(temp.size(0), -1) # Linearize for the FC
+        #     g_out.append(temp)
+            
+        iter = 0
+        temp = self.GT1(g[iter], h[iter], e[iter], h_lap_pos_enc[iter], h_wl_pos_enc[iter])
+        temp = temp.view(temp.size(0), -1) # Linearize for the FC
+        g_out.append(temp)
+        
+        iter += 1
+        temp = self.GT2(g[iter], h[iter], e[iter], h_lap_pos_enc[iter], h_wl_pos_enc[iter])
+        temp = temp.view(temp.size(0), -1) # Linearize for the FC
+        g_out.append(temp)
+        
+        iter += 1
+        temp = self.GT3(g[iter], h[iter], e[iter], h_lap_pos_enc[iter], h_wl_pos_enc[iter])
+        temp = temp.view(temp.size(0), -1) # Linearize for the FC
+        g_out.append(temp)
+        
+        iter += 1
+        temp = self.GT4(g[iter], h[iter], e[iter], h_lap_pos_enc[iter], h_wl_pos_enc[iter])
+        temp = temp.view(temp.size(0), -1) # Linearize for the FC
+        g_out.append(temp)
+        
+        iter += 1
+        temp = self.GT1(g[iter], h[iter], e[iter], h_lap_pos_enc[iter], h_wl_pos_enc[iter])
+        temp = temp.view(temp.size(0), -1) # Linearize for the FC
+        g_out.append(temp)
+        
+        iter += 1
+        temp = self.GT2(g[iter], h[iter], e[iter], h_lap_pos_enc[iter], h_wl_pos_enc[iter])
+        temp = temp.view(temp.size(0), -1) # Linearize for the FC
+        g_out.append(temp)
+        
+        iter += 1
+        temp = self.GT3(g[iter], h[iter], e[iter], h_lap_pos_enc[iter], h_wl_pos_enc[iter])
+        temp = temp.view(temp.size(0), -1) # Linearize for the FC
+        g_out.append(temp)
+        
+        iter += 1
+        temp = self.GT4(g[iter], h[iter], e[iter], h_lap_pos_enc[iter], h_wl_pos_enc[iter])
+        temp = temp.view(temp.size(0), -1) # Linearize for the FC
+        g_out.append(temp)
+                
+        
+        g_student = torch.cat(tuple(g_out[:4]), dim=1)
+        g_model = torch.cat(tuple(g_out[4:]), dim=1)
+        
+        # Coattention
+        #coat = self.coattention(g_student, g_model)
+        #final = self.fc(coat)
+        
+        # print(final.shape)
 
         # ----- Matching Layer -----
         def mp_matching_func(v1, v2, w):
@@ -137,16 +185,6 @@ class MyEnsemble(nn.Module):
         for i in range(len(g_out)//2):
             # v1 = v2 = (batch, hidden_size), w = (l, hidden_size)  -> (batch, l)           
             temp = mp_matching_func(g_out[i], g_out[i+step], self.mp_w[i])
-            
-            
-            
-#             a = g_out[i]
-#             b = g_out[i+step]
-#             c = torch.abs(a-b)
-#             d = a*b           
-#             temp = torch.cat((a,b,c,d),dim=1)
-            
-            
             graph_list.append(temp)
 
         # list of (batch, l) -> (batch, l, 4)           
@@ -156,22 +194,19 @@ class MyEnsemble(nn.Module):
         
         
         # (batch, l*4) -> batch
-        final = self.MLP_layer_1(graph_list)
+        final = self.MLP_layer_1(graph_list) #RAJAT MADE CHAGE
         
-        #gr = self.MLP_layer_1(graph_list)
+#         gr = self.MLP_layer_1(graph_list)
         
-        #conact graph and SBERT
-        #gr_text = torch.cat((gr, sim_scores), dim=1)
+        #concat graph and SBERT
+#         gr_text = torch.cat((gr, sim_scores), dim=1)
         
-        #final = self.MLP_layer_2(gr_text)
-        
+#         final = self.MLP_layer_2(gr_text)
+        # print(final)
         return final
         
 
     def loss(self, scores, targets):
-        # print("\n>>> ensemble loss function")
-        # print(scores[:5], scores.size())
-        # print(targets[:5], targets.size())
         mse_loss = nn.MSELoss()(scores, targets)
         eps = 1e-6
         rmse_loss = torch.sqrt(mse_loss + eps)
@@ -188,18 +223,6 @@ def train_val_pipeline(MODEL_NAME, dataset, params, net_params, dirs):
         
     DATASET_NAME = dataset.name
     
-    if net_params['lap_pos_enc']:
-        st = time.time()
-        print("[!] Adding Laplacian positional encoding.")
-        dataset._add_laplacian_positional_encodings(net_params['pos_enc_dim'])
-        print('Time LapPE:',time.time()-st)
-        
-    if net_params['wl_pos_enc']:
-        st = time.time()
-        print("[!] Adding WL positional encoding.")
-        dataset._add_wl_positional_encodings()
-        print('Time WL PE:',time.time()-st)
-    
     if net_params['full_graph']:
         st = time.time()
         print("[!] Converting the given graphs to full graphs..")
@@ -210,7 +233,19 @@ def train_val_pipeline(MODEL_NAME, dataset, params, net_params, dirs):
         st = time.time()
         print("[!] Adding self loops to graphs..")
         dataset._add_self_loops()
-        print('Time taken to add self loops:',time.time()-st)    
+        print('Time taken to add self loops:',time.time()-st)  
+    
+    if net_params['lap_pos_enc']:
+        st = time.time()
+        print("[!] Adding Laplacian positional encoding.")
+        dataset._add_laplacian_positional_encodings(net_params['pos_enc_dim'])
+        print('Time LapPE:',time.time()-st)
+        
+    if net_params['wl_pos_enc']:
+        st = time.time()
+        print("[!] Adding WL positional encoding.")
+        dataset._add_wl_positional_encodings()
+        print('Time WL PE:',time.time()-st)  
         
     trainset, valset, testset = dataset.train_s_arg0, dataset.val_s_arg0, dataset.test_s_arg0
         
@@ -245,7 +280,7 @@ def train_val_pipeline(MODEL_NAME, dataset, params, net_params, dirs):
     model.to(device)
     print("Ensemble model PARAMS = ", model.parameters)
 
-    # optimizer = optim.Adam(model.parameters(), lr=params['init_lr'], weight_decay=params['weight_decay'])
+#     optimizer = optim.Adam(model.parameters(), lr=params['init_lr'], weight_decay=params['weight_decay'])
     optimizer = optim.RMSprop(model.parameters(), lr=params['init_lr'], weight_decay=params['weight_decay'])
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min',
                                                      factor=params['lr_reduce_factor'],
@@ -550,11 +585,11 @@ def main():
     if args.self_loop is not None:
         net_params['self_loop'] = True if args.self_loop=='True' else False
     if args.lap_pos_enc is not None:
-        net_params['lap_pos_enc'] = True if args.pos_enc=='True' else False
+        net_params['lap_pos_enc'] = True if args.lap_pos_enc=='True' else False
     if args.pos_enc_dim is not None:
         net_params['pos_enc_dim'] = int(args.pos_enc_dim)
     if args.wl_pos_enc is not None:
-        net_params['wl_pos_enc'] = True if args.pos_enc=='True' else False
+        net_params['wl_pos_enc'] = True if args.wl_pos_enc=='True' else False
         
     
     # ZINC

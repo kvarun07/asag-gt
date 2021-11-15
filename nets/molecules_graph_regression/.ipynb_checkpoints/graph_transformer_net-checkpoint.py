@@ -9,6 +9,7 @@ import dgl
     
 """
 from layers.graph_transformer_edge_layer import GraphTransformerLayer
+# from layers.graph_transformer_layer import GraphTransformerLayer
 from layers.mlp_readout_layer import MLPReadout
 
 class GraphTransformerNet(nn.Module):
@@ -92,6 +93,7 @@ class GraphTransformerNet(nn.Module):
         # convnets
         for conv in self.layers:
             h, e = conv(g, h, e)
+            # h = conv(g, h)
         g.ndata['h'] = h
         
         if self.readout == "sum":
