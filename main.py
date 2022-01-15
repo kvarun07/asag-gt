@@ -1,16 +1,13 @@
 """
     IMPORTING LIBS
 """
-import dgl
 
 import numpy as np
 import os
-import socket
 import time
 import random
 import glob
 import argparse, json
-import pickle
 
 import torch
 import torch.nn as nn
@@ -21,9 +18,7 @@ from torch.utils.data import DataLoader
 
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
-import math
 from layers.mlp_readout_layer import MLPReadout
-from coattention import *
 
 class DotDict(dict):
     def __init__(self, **kwds):
