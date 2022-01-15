@@ -1,8 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 import dgl
+
+from layers.graph_transformer_edge_layer import GraphTransformerLayer
+from layers.mlp_readout_layer import MLPReadout
 
 """
     Graph Transformer with edge features 
@@ -11,8 +13,6 @@ import dgl
     Dwivedi, Vijay Prakash and Bresson, Xavier (2021)
     https://github.com/graphdeeplearning/graphtransformer
 """
-from layers.graph_transformer_edge_layer import GraphTransformerLayer
-from layers.mlp_readout_layer import MLPReadout
 
 class GraphTransformerNet(nn.Module):
     def __init__(self, net_params):
