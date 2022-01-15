@@ -87,13 +87,11 @@ class MyEnsemble(nn.Module):
         self.GT4 = gnn_model(MODEL_NAME, net_params).to(self.device)
         
         #multi perspective matching weight initialization starts       
-        
         self.mp_w = []
         for i in range(4): # 4 weights corrsponding to each subgraph
             self.mp_w.append(nn.Parameter(torch.rand(self.l, self.out_dim)).to(self.device))
                    
-        #multi perspective matching weight initialization ends       
-        
+        #multi perspective matching weight initialization ends
         self.MLP_layer_1 = MLPReadout(4*self.l, 1) # #subgraphs * #of perspective 
         
         
