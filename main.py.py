@@ -87,10 +87,6 @@ class MyEnsemble(nn.Module):
         self.GT3 = gnn_model(MODEL_NAME, net_params).to(self.device)
         self.GT4 = gnn_model(MODEL_NAME, net_params).to(self.device)
         
-        # Adding coattention
-#         self.coattention = CoAttention(self.device, self.out_dim)
-#         self.fc = MLPReadout(2*self.out_dim, 1)
-        
         #multi perspective matching weight initialization starts       
         
         self.mp_w = []
@@ -100,20 +96,11 @@ class MyEnsemble(nn.Module):
         #multi perspective matching weight initialization ends       
         
         self.MLP_layer_1 = MLPReadout(4*self.l, 1) # #subgraphs * #of perspective 
-
-        # Integrate SBERT scores
-#         self.MLP_layer_1 = MLPReadout(4*self.l, 4)
-#         self.MLP_layer_2 = MLPReadout(8, 1)
         
         
     def forward(self, g, h, e, h_lap_pos_enc=None, h_wl_pos_enc=None, sim_scores=None):
 
         g_out = []
-        #Iterating over graph transformers     
-        # for iter in range(8):
-        #     temp = self.GT(g[iter], h[iter], e[iter], h_lap_pos_enc[iter], h_wl_pos_enc[iter])
-        #     temp = temp.view(temp.size(0), -1) # Linearize for the FC
-        #     g_out.append(temp)
             
         iter = 0
         temp = self.GT1(g[iter], h[iter], e[iter], h_lap_pos_enc[iter], h_wl_pos_enc[iter])
@@ -159,10 +146,6 @@ class MyEnsemble(nn.Module):
         g_student = torch.cat(tuple(g_out[:4]), dim=1)
         g_model = torch.cat(tuple(g_out[4:]), dim=1)
         
-        # Coattention
-        #coat = self.coattention(g_student, g_model)
-        #final = self.fc(coat)
-        
         # print(final.shape)
 
         # ----- Matching Layer -----
@@ -191,18 +174,8 @@ class MyEnsemble(nn.Module):
         graph_list = torch.stack(graph_list, dim=1)     
         # list of (batch, l, 4) -> (batch, l*4)
         graph_list = graph_list.flatten(start_dim=1)
-        
-        
         # (batch, l*4) -> batch
-        final = self.MLP_layer_1(graph_list) #RAJAT MADE CHAGE
-        
-#         gr = self.MLP_layer_1(graph_list)
-        
-        #concat graph and SBERT
-#         gr_text = torch.cat((gr, sim_scores), dim=1)
-        
-#         final = self.MLP_layer_2(gr_text)
-        # print(final)
+        final = self.MLP_layer_1(graph_list) 
         return final
         
 
