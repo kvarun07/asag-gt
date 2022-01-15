@@ -38,8 +38,6 @@ from nets.molecules_graph_regression.load_net import gnn_model
 from data.data import LoadData 
 
 
-
-
 """
     GPU Setup
 """
@@ -331,21 +329,6 @@ def train_val_pipeline(MODEL_NAME, dataset, params, net_params, dirs):
     test_loader_list.append(test_loader_m_def)
     test_loader_list.append(test_loader_m_rest)
 
-    # train_loader = DataLoader(trainset, batch_size=params['batch_size'], shuffle=False, collate_fn=dataset.collate)
-    # val_loader = DataLoader(valset, batch_size=params['batch_size'], shuffle=False, collate_fn=dataset.collate)
-    # test_loader = DataLoader(testset, batch_size=params['batch_size'], shuffle=False, collate_fn=dataset.collate)
-    
-    # print("TRAIN LOADER")
-    # print(train_loader_s_arg0)
-    # print("!!!!!!")
-    # for iter, (batch_graphs, batch_targets) in enumerate(train_loader_s_arg0):
-    #     print(batch_graphs)
-    #     print(batch_targets)
-    #     break
-    
-    # print("VAL LOADER", val_loader[0])
-    # print("TEST LOADER", test_loader[0])
-
     # At any point you can hit Ctrl + C to break out of training early.
     try:
         with tqdm(range(params['epochs'])) as t:
@@ -373,15 +356,8 @@ def train_val_pipeline(MODEL_NAME, dataset, params, net_params, dirs):
                 writer.add_scalar('val/_mae', epoch_val_mae, epoch)
                 writer.add_scalar('test/_mae', epoch_test_mae, epoch)
                 writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], epoch)
-
-                        
-                # t.set_postfix(time=time.time()-start, lr=optimizer.param_groups[0]['lr'],
-                #               train_loss=epoch_train_loss, val_loss=epoch_val_loss, test_loss=epoch_test_loss, 
-                #               train_MAE=epoch_train_mae, val_MAE=epoch_val_mae,
-                #               test_MAE=epoch_test_mae)
                 
                 print(f'\ntest_MAE={epoch_test_mae:.3f}, test_loss={epoch_test_loss:.3f}, train_MAE={epoch_train_mae:.3f}, train_loss={epoch_train_loss:.3f}, val_MAE={epoch_val_mae:.3f}, val_loss={epoch_val_loss:.3f}')
-
 
                 per_epoch_time.append(time.time()-start)
 
@@ -435,14 +411,10 @@ def train_val_pipeline(MODEL_NAME, dataset, params, net_params, dirs):
                   test_mae, train_mae, epoch, (time.time()-t0)/3600, np.mean(per_epoch_time)))
         
 
-
-
-
 def main():    
     """
         USER CONTROLS
     """
-    
     
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', help="Please give a config.json file with training/model/data/param details")
@@ -497,9 +469,6 @@ def main():
     print("DATASET_NAME", DATASET_NAME)
     dataset = LoadData(DATASET_NAME)
     print(dataset)
-    # print(type(dataset[0]))
-    # print(dataset[0].__get_item__(0))
-    # print(dataset[0].__len__())
 
     if args.out_dir is not None:
         out_dir = args.out_dir
@@ -565,14 +534,6 @@ def main():
         net_params['wl_pos_enc'] = True if args.wl_pos_enc=='True' else False
         
     
-    # ZINC
-    # net_params['in_dim'] = torch.unique(dataset.train_ar[0][0][0].ndata['feat'], dim=0).size(0)
-    # print("IN_DIM =", net_params['in_dim'])
-    # print(dataset.train[0][0][0].ndata['feat'])
-    # net_params['num_atom_type'] = dataset.num_atom_type
-    # net_params['num_bond_type'] = dataset.num_bond_type
-
-    
     root_log_dir = out_dir + 'logs/' + MODEL_NAME + "_" + DATASET_NAME + "_GPU" + str(config['gpu']['id']) + "_" + time.strftime('%Hh%Mm%Ss_on_%b_%d_%Y')
     root_ckpt_dir = out_dir + 'checkpoints/' + MODEL_NAME + "_" + DATASET_NAME + "_GPU" + str(config['gpu']['id']) + "_" + time.strftime('%Hh%Mm%Ss_on_%b_%d_%Y')
     write_file_name = out_dir + 'results/result_' + MODEL_NAME + "_" + DATASET_NAME + "_GPU" + str(config['gpu']['id']) + "_" + time.strftime('%Hh%Mm%Ss_on_%b_%d_%Y')
@@ -590,13 +551,8 @@ def main():
     print("\nTRAINING MODEL")
     train_val_pipeline(MODEL_NAME, dataset, params, net_params, dirs)
 
-    
-    
-    
-    
-    
-    
-    
+
+##### RUN #####    
 main()    
 
 
