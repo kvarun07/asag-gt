@@ -68,6 +68,7 @@ def view_model_param(MODEL_NAME, net_params):
     print('MODEL/Total parameters:', MODEL_NAME, total_param)
     return total_param
 
+
 """
 ENSEMBLE CLASS
 """

@@ -134,7 +134,6 @@ def self_loop(g):
         
         This function is called inside a function in MoleculeDataset class.
     """
-    # print("Calling Self Loop UTILITY Function!!!")
 
     new_g = dgl.DGLGraph()
     new_g.add_nodes(g.number_of_nodes())
@@ -333,55 +332,29 @@ class MoleculeDataset(torch.utils.data.Dataset):
         start = time.time()
         print("[I] Loading dataset %s..." % (name))
         self.name = name
-        data_dir = 'data/molecules/'
-        # with open(data_dir+name+'.pkl',"rb") as data:
 
-        # df = pd.read_csv('data/graph_and_text.csv')
-        # sim_list = list(zip(df['similarity_ARG0'], df['similarity_ARG1'], df['similarity_default'], df['similarity_rest']))
-
-        # with open('data/all-graph-score.pickle',"rb") as data:
-#         with open('data/scoreall_graphall_withscore.pickle',"rb") as data:
         with open('data/dgl_graphs.pickle',"rb") as data:
-        # with open('data/dgl_score_avg_8dim.pickle',"rb") as data:
             data = pickle.load(data)
-
             print("\nORIGINAL GRAPHS")
-#             print(data)
             print(f"Total Data size = {len(data)} graphs!")
             print(f"Row size = {len(data[1])}")
-            
-            print(data[1])
-            print(data[1][0])
-            # print(data[1][0].nodes(data=True))
-            # print(data[1][0].nodes.data)
-            print(data[1][0].nodes())
-            print(data[1][0].edges())
 
             print("\nCONVERTED GRAPHS")
-            ###############
             new_data = pre_process(data)
-            # new_data = data
-            ################
-            print(new_data[:2])
-            print(new_data[1])
-            print(new_data[1][0].nodes())
-            print(new_data[1][0].edges())
             print(f"Data size = {len(new_data)} graphs!")
 
             # Define train/test/val splits in the ratio of 8:1:1
             # First shuffle g_list
-#             random.seed(13)
             random.shuffle(new_data)
-            # print(new_data[0])
             total = len(new_data)
-            part1 = math.ceil(0.9*total)
+            part1 = math.ceil(0.8*total)
             part2 = math.ceil(0.9*total)
 
             train = new_data[:part1]
-#             val = new_data[part1:part2]
-#             test = new_data[part2:]
-            val = new_data[part1:]
-            test = new_data[part1:]
+            val = new_data[part1:part2]
+            test = new_data[part2:]
+            # val = new_data[part1:]
+            # test = new_data[part1:]
 
             # Train
             self.train_s_arg0 = DataUnit([ (i[0], i[-2], i[-1]) for i in train ])
@@ -416,10 +389,6 @@ class MoleculeDataset(torch.utils.data.Dataset):
             self.test_m_def = DataUnit([ (i[6], i[-2], i[-1]) for i in test ])
             self.test_m_rest = DataUnit([ (i[7], i[-2], i[-1]) for i in test ])
 
-            # self.train = DataUnit(new_data[:part1])
-            # self.val = DataUnit(new_data[part1:part2])
-            # self.test = DataUnit(new_data[part2:])
-
             print(self.train_s_arg0.__len__(), self.val_s_arg0.__len__(), self.test_s_arg0.__len__())
 
             print("Self.TRAIN.arg0 = ", self.train_s_arg0)
@@ -432,7 +401,6 @@ class MoleculeDataset(torch.utils.data.Dataset):
             print(self.train_s_arg0.__getitem__(2)[-1])
             print(type(self.train_s_arg0))
 
-        # print('train, test, val sizes :',len(self.train),len(self.test),len(self.val))
         print("[I] Finished loading.")
         print("[I] Data load time: {:.4f}s".format(time.time()-start))
 
@@ -444,16 +412,9 @@ class MoleculeDataset(torch.utils.data.Dataset):
         labels = torch.tensor(np.array(labels)).unsqueeze(1)
         batched_graph = dgl.batch(graphs)
 
-        # print("\nCOLLATE FUNC")
-        # print(len(labels))
-        # print(len(sim_scores))
-
         sim_scores = [ i.tolist() for i in sim_scores ]
         sim_scores = torch.tensor(sim_scores)
-        # print(sim_scores[:5])
-        # print(labels[:2])
-        # print(sim_scores[:2])
-               
+
         return batched_graph, sim_scores, labels
     
     
@@ -498,10 +459,6 @@ class MoleculeDataset(torch.utils.data.Dataset):
         self.test_m_def.graph_lists = [self_loop(g) for g in self.test_m_def.graph_lists]
         self.test_m_rest.graph_lists = [self_loop(g) for g in self.test_m_rest.graph_lists]
 
-        # self.train.graph_lists = [self_loop(g) for g in self.train.graph_lists]
-        # self.val.graph_lists = [self_loop(g) for g in self.val.graph_lists]
-        # self.test.graph_lists = [self_loop(g) for g in self.test.graph_lists]
-
         print(">>>>> Self Loop Train List")
         print(self.train_s_arg0.graph_lists[0].ndata['feat'])
 
@@ -509,10 +466,6 @@ class MoleculeDataset(torch.utils.data.Dataset):
         
         # function for converting graphs to full graphs
         # this function will be called only if full_graph flag is True
-
-        # self.train.graph_lists = [make_full_graph(g) for g in self.train.graph_lists]
-        # self.val.graph_lists = [make_full_graph(g) for g in self.val.graph_lists]
-        # self.test.graph_lists = [make_full_graph(g) for g in self.test.graph_lists]
 
         print(">>>>> Calling _make_full_graph")
 
@@ -538,7 +491,6 @@ class MoleculeDataset(torch.utils.data.Dataset):
         self.val_m_def.graph_lists = [make_full_graph(g) for g in self.val_m_def.graph_lists]
         self.val_m_rest.graph_lists = [make_full_graph(g) for g in self.val_m_rest.graph_lists]
 
-
         # Test
         self.test_s_arg0.graph_lists = [make_full_graph(g) for g in self.test_s_arg0.graph_lists]
         self.test_s_arg1.graph_lists = [make_full_graph(g) for g in self.test_s_arg1.graph_lists]
@@ -556,10 +508,6 @@ class MoleculeDataset(torch.utils.data.Dataset):
     def _add_laplacian_positional_encodings(self, pos_enc_dim):
         
         # Graph positional encoding v/ Laplacian eigenvectors
-
-        # self.train.graph_lists = [laplacian_positional_encoding(g, pos_enc_dim) for g in self.train.graph_lists]
-        # self.val.graph_lists = [laplacian_positional_encoding(g, pos_enc_dim) for g in self.val.graph_lists]
-        # self.test.graph_lists = [laplacian_positional_encoding(g, pos_enc_dim) for g in self.test.graph_lists]
 
         print(">>>>> Calling _add_laplacian_positional_encodings")
 
