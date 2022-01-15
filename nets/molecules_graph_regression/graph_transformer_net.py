@@ -5,8 +5,11 @@ import torch.nn.functional as F
 import dgl
 
 """
-    Graph Transformer with edge features
-    
+    Graph Transformer with edge features 
+    adapted from 
+    "A Generalization of Transformer Networks to Graphs"
+    Dwivedi, Vijay Prakash and Bresson, Xavier (2021)
+    https://github.com/graphdeeplearning/graphtransformer
 """
 from layers.graph_transformer_edge_layer import GraphTransformerLayer
 from layers.mlp_readout_layer import MLPReadout
