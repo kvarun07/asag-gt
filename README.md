@@ -1,5 +1,5 @@
 # Multi-Relational Graph Transformer for Automatic Short Answer Grading (MitiGaTe)
-This is the official repository for the paper: 
+This repository is the official implementation of the paper: 
 > "Multi-Relational Graph Transformer for Automatic Short Answer Grading": Rajat Agarwal, Varun Khurana, Karish Grover, Mukesh Mohania, Vikram Goyal. (NAACL 2022)
 
 ### Model Architecture
