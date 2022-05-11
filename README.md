@@ -14,7 +14,7 @@ $ conda env create -n ENVNAME --file ENV.yml
 ### Training
 To train the model, run the following command:
 ```
-$ python main.py --gpu_id <gpu id> --config 'configs/graph_transformer_sparse.json' --L <layers in graph transformer> --out_dim 32 --hidden_dim 32 --n_heads <attention heads> --epochs 200
+$ python main.py --gpu_id <gpu id> --config 'configs/graph_transformer_sparse.json' --L <layers in graph transformer> --out_dim 32 --hidden_dim 32 --n_heads <attention heads> --epochs <number of epochs for training>
 ```
 ### Results
 ![image](https://user-images.githubusercontent.com/55681622/167932897-d687602e-af1b-4bb4-81d9-9516d6c5fb7a.png)
