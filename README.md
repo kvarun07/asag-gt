@@ -5,14 +5,14 @@ This is the official repository for the paper:
 ### Model Architecture
 ![image](https://user-images.githubusercontent.com/55681622/167933157-b78aa5ce-ebf4-4d87-af43-8e23379df06d.png)
 
-### Environment
-The `.yml` file has been provided to reproduce the environment.
+### Requirements
+Use `.yml` file to set up the `conda` environment.
 ```
 $ conda env create -n ENVNAME --file ENV.yml
 ```
 
 ### Training
-The parameters can be varied as desired.
+To train the model, run the following command:
 ```
 $ python main.py --gpu_id <gpu id> --config 'configs/graph_transformer_sparse.json' --L <layers in graph transformer> --out_dim 32 --hidden_dim 32 --n_heads <attention heads> --epochs 200
 ```
