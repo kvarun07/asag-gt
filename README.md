@@ -6,9 +6,9 @@ This is the official repository for the paper:
 ![image](https://user-images.githubusercontent.com/55681622/167933157-b78aa5ce-ebf4-4d87-af43-8e23379df06d.png)
 
 ### Requirements
-Use `.yml` file to set up the `conda` environment.
+Use the `environment.yml` file to set up the `conda` environment.
 ```
-$ conda env create -n ENVNAME --file ENV.yml
+$ conda env create -n ENVNAME --file environment.yml
 ```
 
 ### Training
