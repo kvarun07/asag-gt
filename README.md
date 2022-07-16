@@ -2,6 +2,9 @@
 This repository is the official implementation of the paper: 
 > "Multi-Relational Graph Transformer for Automatic Short Answer Grading": Rajat Agarwal, Varun Khurana, Karish Grover, Mukesh Mohania, Vikram Goyal. (NAACL 2022)
 
+## Stable version will be released soon. Stay tuned!
+
+
 ### Model Architecture
 ![image](https://user-images.githubusercontent.com/55681622/167933157-b78aa5ce-ebf4-4d87-af43-8e23379df06d.png)
 
